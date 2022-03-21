@@ -2,10 +2,12 @@
 
     let doodleCanvas = (sketch) => {
         let strokeColor = 'red';
-        let c;
+        let cnv;
         let doodle;
         let label = '';
         let labelIndex = 0;
+        // Used to keep track of active touches.
+        let currentTouches = new Array;
         let myWidth = window.outerWidth;
         let myHeight = window.outerHeight - 100;
         const gotResults = (error, results) => {
@@ -20,22 +22,113 @@
                 console.log(results);
             }
         }
+
+        // Finds the array index of a touch in the currentTouches array.
+        var findCurrentTouchIndex = function (id) {
+            for (var i = 0; i < currentTouches.length; i++) {
+                if (currentTouches[i].id === id) {
+                    return i;
+                }
+            }
+
+            // Touch not found! Return -1.
+            return -1;
+        };
+        sketch.touchStarted = () => {
+            for (let index = 0; index < sketch.touches.length; index++) {
+                const touch = sketch.touches[index];
+                currentTouches.push({
+                    id: touch.id,
+                    x: touch.x,
+                    y: touch.y,
+                });
+            }
+        }
+        sketch.touchMoved = () => {
+            for (let index = 0; index < sketch.touches.length; index++) {
+                const touch = sketch.touches[index];
+                var currentTouchIndex = findCurrentTouchIndex(touch.id);
+                if (currentTouchIndex >= 0) {
+                    var currentTouch = currentTouches[currentTouchIndex];
+    
+
+                    doodle.strokeWeight(5)
+                    doodle.stroke(strokeColor);
+                    doodle.line(currentTouch.x, currentTouch.y, touch.x, touch.y);
+    
+                    // Update the touch record.
+                    currentTouch.x = touch.x;
+                    currentTouch.y = touch.y;
+    
+                    // Store the record.
+                    currentTouches.splice(currentTouchIndex, 1, currentTouch);
+                } else {
+                    console.log('Touch was not found!');
+                }
+            }
+        }
+        sketch.touchEnded = () => {
+            for (let index = 0; index < sketch.touches.length; index++) {
+                const touch = sketch.touches[index];
+                var currentTouchIndex = findCurrentTouchIndex(touch.identifier);
+                if (currentTouchIndex >= 0) {
+                    // var currentTouch = currentTouches[currentTouchIndex];
+
+                    // Remove the record.
+                    currentTouches.splice(currentTouchIndex, 1);
+                } else {
+                    console.log('Touch was not found!');
+
+                }    
+            }
+        }
         sketch.setup = () => {
-            c = sketch.createCanvas(myWidth, myHeight);
+            cnv = sketch.createCanvas(myWidth, myHeight);
             doodle = sketch.createGraphics(myWidth, myHeight);
             sketch.background(0);
         }
         sketch.draw = () => {
             sketch.background(255);
 
-            doodle.stroke(strokeColor);
-            if (sketch.mouseIsPressed === true) {
-                doodle.line(sketch.mouseX, sketch.mouseY, sketch.pmouseX, sketch.pmouseY);
-            }
+            // doodle.strokeWeight(5)
+            // doodle.stroke(strokeColor);
+            // if (sketch.mouseIsPressed === true) {
+            //     doodle.line(sketch.mouseX, sketch.mouseY, sketch.pmouseX, sketch.pmouseY);
+            // }
+            // for (let index = 0; index < sketch.touches.length; index++) {
+            //     const touch = sketch.touches[index];
+            //     doodle.line(touch.x, touch.y)
+            // }
+
+//   // for every touch event in the touches[], draw an ellipse
+//   // (IOW draw a circle for every finger tip touching screen)
+//   // do this first so info text goes *over* the ellipses
+//   for(let i = 0; i < touches.length; i++) {
+//     ellipse(touches[i].x ,touches[i].y, 250, 250);
+//   }
+  
+//   // if no touches but touchstarted == true, then it's a regular
+//   // mouse interaction, so draw an ellipse for the mouse location
+//   if(touches.length == 0 && touchstarted)
+//       ellipse(mouseX,mouseY, 250, 250);
+  
+//   // notify when touch event has ended
+//   if(touchended) text("touch is NO", width/2,height/2);
+  
+//   // if we're in a touch event, give some info
+//   if(touchstarted) {
+//     text("touch is YES", width/2,height/2);
+//     text("X,Y: "+mouseX+","+mouseY, width/2, height/2+30);
+//     text("HUE: "+Math.round(bg)+", SAT: "+Math.round(sat), width/2, height/2+60);
+//     text("touches detected: "+touches.length, width/2, height/2+90);
+//   }
+
+
+
             sketch.image(doodle, 0, 0);
             
             if(sketch.frameCount % 300 == 0) {
-                mobileNet.predict(c, gotResults)
+                mobileNet.predict(cnv, gotResults)
             }
             sketch.fill(0);
             sketch.textSize(32);
