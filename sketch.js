@@ -118,6 +118,6 @@
         }
     }
 
-    let mobileNet = await ml5.imageClassifier('MobileNet');
+    let mobileNet = await ml5.imageClassifier('DoodleNet');
     new p5(doodleCanvas);
 })();
